@@ -94,7 +94,7 @@ def RunPipeline(modelPath: Path, imagePaths: List[Path], outputPath: Optional[Pa
                 SaveAsGIF(stack, outputPath / (path.stem + "_" + name.lower() + ".gif"))
 
     if colorLabeledOutput:
-        Output('Color-Labeled', LabeledImagesToColoredImages(cleanedImages))
+        Output('Masked', LabeledImagesToColoredImages(cleanedImages))
 
     if idLabeledOutput:
         Output('ID-Labeled', cleanedImages)

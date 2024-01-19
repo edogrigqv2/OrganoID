@@ -17,9 +17,9 @@ def AugmentImages(imagesDirectory: Path, segmentationsDirectory: Path, outputDir
     augmentor.ground_truth(str(segmentationsDirectory.absolute()))
 
     # Random transformations to apply
-    augmentor.rotate(probability=1, max_left_rotation=20, max_right_rotation=20)
-    augmentor.flip_left_right(probability=0.5)
-    augmentor.flip_top_bottom(probability=0.5)
+    augmentor.rotate(probability=1, max_left_rotation=20, max_right_rotation=20) #include
+    augmentor.flip_left_right(probability=0.5) #include
+    augmentor.flip_top_bottom(probability=0.5) #include
     augmentor.zoom_random(probability=0.5, percentage_area=0.7)
     augmentor.shear(probability=1, max_shear_left=20, max_shear_right=20)
     augmentor.random_distortion(probability=0.5, grid_width=5, grid_height=5, magnitude=3)
