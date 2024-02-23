@@ -59,12 +59,14 @@ def Track(images: np.ndarray, costOfNonAssignment: float, costFunction: CostFunc
     print("Tracking images...", end="", flush=True)
     for i in range(images.shape[0]):
         printRep(str(i) + "/" + str(images.shape[0]))
-        mapping = np.asarray(UpdateTracks(tracks, images[i], costOfNonAssignment, trackLostCutoff,
-                                          costFunction))
-        m2 = np.zeros(np.max(mapping[:, 0]) + 1)
-        m2[mapping[:, 0]] = mapping[:, 1]
-        mappedImage = m2[images[i]]
-        relabeledImages[i] = mappedImage
+        mapping_ = UpdateTracks(tracks, images[i], costOfNonAssignment, trackLostCutoff,
+                                          costFunction)
+        if mapping_:
+            mapping = np.asarray(mapping_)
+            m2 = np.zeros(np.max(mapping[:, 0]) + 1)
+            m2[mapping[:, 0]] = mapping[:, 1]
+            mappedImage = m2[images[i]]
+            relabeledImages[i] = mappedImage
 
     printRep("Done.")
     printRep(None)
