@@ -1,14 +1,16 @@
-from typing import List, Tuple, Union
+import math
 import pathlib
 import re
-from PIL import Image, UnidentifiedImageError, ImageFont, ImageDraw
+from typing import List, Tuple, Union
+
 import numpy as np
 import skimage.color
 import skimage.filters
 import skimage.measure
-import math
-from Core.HelperFunctions import printRep
+from PIL import Image, ImageDraw, ImageFont, UnidentifiedImageError
+
 from Core.Config import ARIAL_FONT_PATH
+from Core.HelperFunctions import printRep
 
 
 def ComputeOutline(image: np.ndarray):
@@ -29,7 +31,7 @@ def ImagesToHeatmaps(images: np.ndarray):
         v = np.minimum(1, 2 * (image - minimum) / (maximum - minimum))
         concat = np.stack([h, s, v], -1)
         converted = skimage.color.hsv2rgb(concat)
-        heatmaps[i] = (converted * 255)
+        heatmaps[i] = converted * 255
     printRep(None)
     print("Done.")
     return heatmaps
@@ -37,13 +39,7 @@ def ImagesToHeatmaps(images: np.ndarray):
 
 def LabeledImagesToColoredImages(images: np.ndarray, colors=None, fontSize=0):
     if colors is None:
-        colors = [(255, 0, 0),
-                  (0, 255, 0),
-                  (0, 0, 255),
-                  (255, 255, 0),
-                  (255, 0, 255),
-                  (0, 255, 255),
-                  (128, 128, 128)]
+        colors = [(255, 0, 0), (0, 255, 0), (0, 0, 255), (255, 255, 0), (255, 0, 255), (0, 255, 255), (128, 128, 128)]
     cycles = math.ceil(float(np.max(images)) / len(colors))
     colorMap = np.asarray([(0, 0, 0)] + colors * cycles, dtype=np.uint8)
     colorized = colorMap[images]
@@ -89,34 +85,34 @@ def ConvertImagesToStacks(images: np.ndarray, originalImages: List[Image.Image])
     return stacks
 
 
-def ConvertImagesToPILImageStacks(images: np.ndarray, originalImages: List[Image.Image],
-                                  resize=True):
+def ConvertImagesToPILImageStacks(images: np.ndarray, originalImages: List[Image.Image], resize=True):
     stacks = ConvertImagesToStacks(images, originalImages)
     if resize:
         return [
             [Image.fromarray(d).resize(o.size, resample=Image.Resampling.NEAREST) for d in stack]
-            for o, stack in
-            zip(originalImages, stacks)]
+            for o, stack in zip(originalImages, stacks)
+        ]
     else:
         return [[Image.fromarray(d) for d in stack] for stack in stacks]
 
 
 def SavePILImageStack(stack: List[Image.Image], path: pathlib.Path):
+    extra_args = {}
+    if path.suffix in (".tif", ".tiff"):
+        extra_args = {**extra_args, "compression": "tiff_adobe_deflate"}
     if stack[0].mode[0] == "I":
         path = path.parent / (path.stem + ".tif")
     if len(stack) == 1:
         stack[0].save(path)
     else:
-        stack[0].save(path, save_all=True, append_images=stack[1:], compression=None)
+        stack[0].save(path, save_all=True, append_images=stack[1:], **extra_args)
 
 
 def SaveAsGIF(images: np.ndarray, path: pathlib.Path):
     path.parent.mkdir(parents=True, exist_ok=True)
-    Image.fromarray(images[0]).convert(mode="RGB").save(path, save_all=True,
-                                                        append_images=[
-                                                            Image.fromarray(im).convert(mode="RGB")
-                                                            for im in images[1:]],
-                                                        loop=0)
+    Image.fromarray(images[0]).convert(mode="RGB").save(
+        path, save_all=True, append_images=[Image.fromarray(im).convert(mode="RGB") for im in images[1:]], loop=0
+    )
 
 
 def LoadPILImages(source: Union[pathlib.Path, List[pathlib.Path]]) -> List[Image.Image]:
@@ -134,24 +130,26 @@ def LoadPILImages(source: Union[pathlib.Path, List[pathlib.Path]]) -> List[Image
         # Load directory
         matches = sort_paths_nicely([path for path in source.iterdir() if path.is_file()])
         if len(matches) == 0:
-            raise Exception(
-                "Could not find any images in directory '" + str(source.absolute()) + "'.")
+            raise Exception("Could not find any images in directory '" + str(source.absolute()) + "'.")
         return list(OpenAndSkipErrors(matches))
     if source.is_file():
         return [Image.open(source)]
 
     # Handle regular expression paths
-    matches = sort_paths_nicely(
-        [path for path in source.parent.glob(source.name) if path.is_file()])
+    matches = sort_paths_nicely([path for path in source.parent.glob(source.name) if path.is_file()])
     if len(matches) == 0:
         raise Exception("Could not find any images matching '" + str(source.absolute()) + "'.")
     return list(OpenAndSkipErrors(matches))
 
 
 # Overlay a set of organoid regions on a list of base images.
-def DrawRegionsOnImages(labeledImages: np.ndarray, images: np.ndarray,
-                        textColor: Tuple[int, int, int],
-                        fontSize: int, overlayColor: Tuple[int, int, int]):
+def DrawRegionsOnImages(
+    labeledImages: np.ndarray,
+    images: np.ndarray,
+    textColor: Tuple[int, int, int],
+    fontSize: int,
+    overlayColor: Tuple[int, int, int],
+):
     font = ImageFont.truetype("/System/Library/Fonts/Arial.ttf", fontSize)
     images = np.repeat(images[:, :, :, None], 3, axis=-1)
     outlined = np.zeros(images.shape[:-1], dtype=bool)
@@ -176,9 +174,9 @@ def sort_paths_nicely(paths: List[pathlib.Path]):
             return s
 
     def alphanum_key(s):
-        """ Turn a string into a list of string and number chunks.
-            "z23a" -> ["z", 23, "a"]
+        """Turn a string into a list of string and number chunks.
+        "z23a" -> ["z", 23, "a"]
         """
-        return [tryint(c) for c in re.split('([0-9]+)', s)]
+        return [tryint(c) for c in re.split("([0-9]+)", s)]
 
     return sorted(paths, key=lambda x: alphanum_key(x.name))
