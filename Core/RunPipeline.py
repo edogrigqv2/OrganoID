@@ -96,8 +96,8 @@ def RunPipeline(modelPath: Path, imagePaths: List[Path], outputPath: Optional[Pa
     if colorLabeledOutput:
         Output('Masked', LabeledImagesToColoredImages(cleanedImages))
 
-    if idLabeledOutput:
-        Output('ID-Labeled', cleanedImages)
+    #if idLabeledOutput:
+    #    Output('ID-Labeled', cleanedImages)
 
     if outputPath is not None and computeProps:
         from Core.Analyze import AnalyzeAndExport
